@@ -301,7 +301,7 @@ class TUI:
             else:
                 optignore = False
             addons = [addon.strip() for addon in list(reader([args], skipinitialspace=True))[0]]
-            with Progress('{task.completed}/{task.total}', '|', BarColumn(bar_width=self.console.width), '|',
+            with Progress('{task.completed}/{task.total}', '|', BarColumn(bar_width=None), '|',
                           auto_refresh=False, console=self.console) as progress:
                 task = progress.add_task('', total=len(addons))
                 while not progress.finished:
@@ -315,18 +315,19 @@ class TUI:
             self.console.print(self.table)
         else:
             self.console.print('[green]Usage:[/green]\n\tThis command accepts a comma-separated list of links as an arg'
-                               'ument.\n\tOption [white]-i[/white] will disable the client version check.\n[bold green]'
-                               'Supported URL:[/bold green]\n\thttps://www.curseforge.com/wow/addons/[[addon_name]] [bo'
-                               'ld white]|[/bold white] cf:[[addon_name]]\n\thttps://www.wowinterface.com/downloads/[[a'
-                               'ddon_name]] [bold white]|[/bold white] wowi:[[addon_id]]\n\thttps://www.tukui.org/addon'
-                               's.php?id=[[addon_id]] [bold white]|[/bold white] tu:[[addon_id]]\n\thttps://www.tukui.o'
-                               'rg/classic-addons.php?id=[[addon_id]] [bold white]|[/bold white] tuc:[[addon_id]]\n\tEl'
-                               'vUI [bold white]|[/bold white] ElvUI:Dev\n\tTukui\n\tSLE:Dev', highlight=False)
+                               'ument.\n\tOption [bold white]-i[/bold white] will disable the client version check.\n[b'
+                               'old green]Supported URL:[/bold green]\n\thttps://www.curseforge.com/wow/addons/[[addon_'
+                               'name]] [bold white]|[/bold white] cf:[[addon_name]]\n\thttps://www.wowinterface.com/dow'
+                               'nloads/[[addon_name]] [bold white]|[/bold white] wowi:[[addon_id]]\n\thttps://www.tukui'
+                               '.org/addons.php?id=[[addon_id]] [bold white]|[/bold white] tu:[[addon_id]]\n\thttps://w'
+                               'ww.tukui.org/classic-addons.php?id=[[addon_id]] [bold white]|[/bold white] tuc:[[addon_'
+                               'id]]\n\tElvUI [bold white]|[/bold white] ElvUI:Dev\n\tTukui\n\tSLE:Dev',
+                               highlight=False)
 
     def c_uninstall(self, args):
         if args:
             addons = [addon.strip() for addon in list(reader([args], skipinitialspace=True))[0]]
-            with Progress('{task.completed}/{task.total}', '|', BarColumn(bar_width=self.console.width), '|',
+            with Progress('{task.completed}/{task.total}', '|', BarColumn(bar_width=None), '|',
                           auto_refresh=False, console=self.console) as progress:
                 task = progress.add_task('', total=len(addons))
                 while not progress.finished:
@@ -339,14 +340,11 @@ class TUI:
                         progress.update(task, advance=1, refresh=True)
             self.console.print(self.table)
         else:
-            self.console.print('[green]Usage:[/green]\n\tThis command accepts a comma-separated list of links as an arg'
-                               'ument.\n[bold green]Supported URL:[/bold green]\n\thttps://www.curseforge.com/wow/addon'
-                               's/[[addon_name]] [bold white]|[/bold white] cf:[[addon_name]]\n\thttps://www.wowinterfa'
-                               'ce.com/downloads/[[addon_name]] [bold white]|[/bold white] wowi:[[addon_id]]\n\thttps:/'
-                               '/www.tukui.org/addons.php?id=[[addon_id]] [bold white]|[/bold white] tu:[[addon_id]]'
-                               '\n\thttps://www.tukui.org/classic-addons.php?id=[[addon_id]] [bold white]|[/bold white]'
-                               ' tuc:[[addon_id]]\n\tElvUI [bold white]|[/bold white] ElvUI:Dev\n\tTukui\n\tSLE:Dev',
-                               highlight=False)
+            self.console.print('[green]Usage:[/green]\n\tThis command accepts a comma-separated list of addon names or '
+                               'full links as an argument.\n[bold green]Supported URL:[/bold green]\n\thttps://www.curs'
+                               'eforge.com/wow/addons/[[addon_name]]\n\thttps://www.wowinterface.com/downloads/[[addon_'
+                               'name]]\n\thttps://www.tukui.org/addons.php?id=[[addon_id]]\n\thttps://www.tukui.org/cla'
+                               'ssic-addons.php?id=[[addon_id]]', highlight=False)
 
     def c_update(self, args, addline=False, update=True, force=False):
         if len(self.core.cfCache) > 0 or len(self.core.wowiCache) > 0:
@@ -357,14 +355,14 @@ class TUI:
             addons = [addon.strip() for addon in list(reader([args], skipinitialspace=True))[0]]
         else:
             addons = sorted(self.core.config['Addons'], key=lambda k: k['Name'].lower())
-        with Progress('{task.completed:.0f}/{task.total}', '|', BarColumn(bar_width=self.console.width+1), '|',
+        exceptions = []
+        with Progress('{task.completed:.0f}/{task.total}', '|', BarColumn(bar_width=None), '|',
                       auto_refresh=False, console=None if self.headless else self.console) as progress:
             task = progress.add_task('', total=len(addons))
             if not args:
                 self.core.bulk_check(addons)
                 self.core.bulk_check_checksum(addons, progress)
             while not progress.finished:
-                exceptions = []
                 for addon in addons:
                     try:
                         name, versionnew, versionold, modified = self.core.\
@@ -389,6 +387,9 @@ class TUI:
         if addline:
             self.console.print('\n')
         self.console.print(self.table)
+        if len(addons) == 0:
+            self.console.print('Apparently there are no addons installed by CurseBreaker.\n'
+                               'Command [green]import[/green] might be used to detect already installed addons.')
         if len(exceptions) > 0:
             self.handle_exception(exceptions, False)
 
@@ -396,8 +397,8 @@ class TUI:
         if args:
             self.c_update(args, False, True, True)
         else:
-            self.console.print('[green]Usage:[/green]\n\tThis command accepts a comma-separated list of links or addon '
-                               'names as an argument.')
+            self.console.print('[green]Usage:[/green]\n\tThis command accepts a comma-separated list of addon names or '
+                               'full links as an argument.')
 
     def c_status(self, args):
         self.c_update(args, False, False)
@@ -406,10 +407,10 @@ class TUI:
         orphansd, orphansf = self.core.find_orphans()
         self.console.print('[green]Directories that are not part of any installed addon:[/green]')
         for orphan in sorted(orphansd):
-            self.console.print(orphan.replace('[GIT]', '[yellow][[GIT]][/yellow]'))
+            self.console.print(orphan.replace('[GIT]', '[yellow][[GIT]][/yellow]'), highlight=False)
         self.console.print('\n[green]Files that are leftovers after no longer installed addons:[/green]')
         for orphan in sorted(orphansf):
-            self.console.print(orphan)
+            self.console.print(orphan, highlight=False)
 
     def c_uri_integration(self, _):
         if self.os == 'Windows':
@@ -446,12 +447,12 @@ class TUI:
         if args:
             if args == self.core.config['WAUsername']:
                 self.console.print(f'WeakAuras version check is now: [green]ENABLED[/green]\nAuras created by '
-                                   f'[white]{self.core.config["WAUsername"]}[/white] are now included.')
+                                   f'[bold white]{self.core.config["WAUsername"]}[/bold white] are now included.')
                 self.core.config['WAUsername'] = ''
             else:
                 self.core.config['WAUsername'] = args.strip()
                 self.console.print(f'WeakAuras version check is now: [green]ENABLED[/green]\nAuras created by '
-                                   f'[white]{self.core.config["WAUsername"]}[/white] are now ignored.')
+                                   f'[bold white]{self.core.config["WAUsername"]}[/bold white] are now ignored.')
         else:
             if self.core.config['WAUsername'] == 'DISABLED':
                 self.core.config['WAUsername'] = ''
@@ -478,7 +479,7 @@ class TUI:
         if args:
             args = args.strip()
             if os.path.isfile(Path(f'WTF/Account/{args}/SavedVariables/WeakAuras.lua')):
-                self.console.print(f'WoW account name set to: [white]{args}[/white]')
+                self.console.print(f'WoW account name set to: [bold white]{args}[/bold white]')
                 self.core.config['WAAccountName'] = args
                 self.core.save_config()
             else:
@@ -491,15 +492,15 @@ class TUI:
             accounts = self.core.detect_accounts()
             if len(accounts) == 0:
                 return
-            elif len(accounts) > 1 and self.core.config['WAUsername'] == '':
+            elif len(accounts) > 1 and self.core.config['WAAccountName'] == '':
                 if verbose:
-                    self.console.print('More than one WoW account detected.\nPlease use [white]set_wa_wow_account[/whit'
-                                       'e] command to set the correct account name.')
+                    self.console.print('More than one WoW account detected.\nPlease use [bold white]set_wa_wow_account['
+                                       '/white] command to set the correct account name.')
                 else:
-                    self.console.print('\n[green]More than one WoW account detected.[/green]\nPlease use [white]set_wa_'
-                                       'wow_account[/white] command to set the correct account name.')
+                    self.console.print('\n[green]More than one WoW account detected.[/green]\nPlease use [bold white]se'
+                                       't_wa_wow_account[/bold white] command to set the correct account name.')
                 return
-            elif len(accounts) == 1 and self.core.config['WAUsername'] == '':
+            elif len(accounts) == 1 and self.core.config['WAAccountName'] == '':
                 self.core.config['WAAccountName'] = accounts[0]
                 self.core.save_config()
             wa = WagoUpdater(self.core.config['WAUsername'], self.core.config['WAAccountName'],
@@ -549,25 +550,26 @@ class TUI:
                 self.console.print(addon)
             self.console.print(f'\n[yellow]Possible matches:[/yellow]')
             for addon in partial_hit:
-                self.console.print(' [white]or[/white] '.join(addon))
+                self.console.print(' [bold white]or[/bold white] '.join(addon))
             self.console.print(f'\n[red]Unknown directories:[/red]')
             for addon in miss:
                 self.console.print(f'{addon}')
-            self.console.print(f'\nExecute [white]import install[/white] command to install all detected addons.\nPossi'
-                               f'ble matches need to be installed manually with the [white]install[/white] command.')
+            self.console.print(f'\nExecute [bold white]import install[/bold white] command to install all detected addo'
+                               f'ns.\nPossible matches need to be installed manually with the [bold white]install[/bold'
+                               f' white] command.')
 
     def c_export(self, _):
         self.console.print(self.core.export_addons(), highlight=False)
 
     def c_help(self, _):
         self.console.print('[green]install [URL][/green]\n\tCommand accepts a comma-separated list of links.\n'
-                           '[green]uninstall [URL/Name][/green]\n\tCommand accepts a comma-separated list of links or'
-                           ' addon names.\n'
-                           '[green]update [URL/Name][/green]\n\tCommand accepts a comma-separated list of links or ad'
-                           'don names.\n\tIf no argument is provided all non-modified addons will be updated.\n'
-                           '[green]force_update [URL/Name][/green]\n\tCommand accepts a comma-separated list of links'
-                           ' or addon names.\n\tSelected addons will be reinstalled or updated regardless of their cu'
-                           'rrent state.\n'
+                           '[green]uninstall [URL/Name][/green]\n\tCommand accepts a comma-separated list of addon name'
+                           's or full links.\n'
+                           '[green]update [URL/Name][/green]\n\tCommand accepts a comma-separated list of addon names o'
+                           'r full links.\n\tIf no argument is provided all non-modified addons will be updated.\n'
+                           '[green]force_update [URL/Name][/green]\n\tCommand accepts a comma-separated list of addon n'
+                           'ames or full links.\n\tSelected addons will be reinstalled or updated regardless of their c'
+                           'urrent state.\n'
                            '[green]wa_update[/green]\n\tCommand detects all installed WeakAuras and generate WeakAura'
                            's Companion payload.\n'
                            '[green]status[/green]\n\tPrints the current state of all installed addons.\n'

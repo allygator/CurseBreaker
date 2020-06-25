@@ -91,7 +91,7 @@ class Core:
                 if addon['URL'].endswith('/'):
                     addon['URL'] = addon['URL'][:-1]
                 # 3.3.0
-                if 'Development' in addon.keys():
+                if 'Development' in addon.keys() and isinstance(addon['Development'], bool):
                     addon['Development'] = 1
             for add in [['2.1.0', 'WAUsername', ''],
                         ['2.2.0', 'WAAccountName', ''],
@@ -303,8 +303,8 @@ class Core:
             files = [f for f in files if not f[0] == '.']
             dirs[:] = [d for d in dirs if not d[0] == '.']
             filecount += len(files)
-        with Progress('{task.completed}/{task.total}', '|', BarColumn(bar_width=console.width if console else 0), '|',
-                      auto_refresh=False, console=console) as progress:
+        with Progress('{task.completed}/{task.total}', '|', BarColumn(bar_width=None), '|', auto_refresh=False,
+                      console=console) as progress:
             task = progress.add_task('', total=filecount)
             while not progress.finished:
                 for root, dirs, files in os.walk('WTF/', topdown=True):
